@@ -1,5 +1,4 @@
 from aiogram import Bot, types, Dispatcher, executor
-from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from dotenv import load_dotenv
@@ -8,7 +7,7 @@ import logging
 import time
 import os
 
-from keyboards import button
+from keyboards import button, share_button
 from start_db import CustomDB
 from custom_states import DownloadAudio, DownloadVideo, Mail
 
@@ -56,6 +55,20 @@ async def all(call):
 @dp.message_handler(commands=['help'])
 async def helper(message:types.Message):
     await message.answer("Вот список команд бота:\n/video - для скачивания видеороликов\n/audio - для скачивания аудио из видеороликов")
+
+
+@dp.message_handler(commands=['share'])
+async def share_user(message:types.Message):
+    await message.answer(f"{message.from_user.full_name} вы можете поделиться своими данными", reply_markup=share_button)
+
+
+@dp.message_handler(content_types=types.ContentType.CONTACT)
+async def get_contact(message:types.Message):
+    cursor = connect.cursor()
+    cursor.execute(f"UPDATE users SET phone = '{message.contact['phone_number']}' WHERE id = {message.from_user.id};")
+    connect.commit()
+    await message.answer("Ваш контактный номер записан")
+
 
 @dp.message_handler(commands=['audio'])
 async def audio(message:types.Message):
